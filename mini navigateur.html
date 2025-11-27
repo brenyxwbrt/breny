@@ -1,0 +1,63 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><title>Navigateur minimal</title>
+<style>
+html,body{height:100%;margin:0}
+body{font:14px system-ui;background:#0a0a0f;color:#eaeaea;display:flex;flex-direction:column;overflow:hidden}
+.bg{position:fixed;inset:0;background:linear-gradient(120deg,#0a0a0f,#132b4f,#251e53,#0a0a0f);background-size:300% 300%;animation:bg 12s ease-in-out infinite;filter:contrast(1.1) saturate(1.2)}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+header{position:relative;z-index:1;display:flex;gap:6px;align-items:center;padding:8px;background:rgba(20,22,28,.6);backdrop-filter:blur(8px);border-bottom:1px solid #1f2330}
+input,select,button{background:#12151c;color:#eaeaea;border:1px solid #242a38;border-radius:8px;padding:8px}
+input{flex:1}
+button{cursor:pointer}
+main{position:relative;z-index:1;display:flex;flex:1}
+iframe{flex:1;border:0;background:#0b0e14}
+.status{position:absolute;right:8px;bottom:8px;color:#aab2c0;font-size:12px;background:rgba(20,22,28,.6);padding:6px 8px;border-radius:8px;border:1px solid #1f2330}
+.qrbox{position:absolute;left:8px;bottom:8px;background:rgba(20,22,28,.6);padding:6px;border-radius:8px;border:1px solid #1f2330}
+.qrbox canvas{display:block}
+</style>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<header>
+  <button id="back" title="Retour">←</button>
+  <button id="fwd" title="Avancer">→</button>
+  <button id="reload" title="Recharger">⟳</button>
+  <button id="home" title="Accueil">⌂</button>
+  <input id="q" placeholder="Tape une URL ou des mots‑clés et appuie Entrée">
+  <select id="engine" title="Moteur de recherche">
+    <option value="bing">Bing</option>
+    <option value="duck">DuckDuckGo</option>
+    <option value="google">Google</option>
+  </select>
+  <button id="go">Aller</button>
+</header>
+<main>
+  <iframe id="view" sandbox="allow-forms allow-scripts allow-same-origin allow-popups" referrerpolicy="no-referrer"></iframe>
+  <div class="status" id="status">Prêt</div>
+  <div class="qrbox"><canvas id="qrcode"></canvas></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+const home=""; // page d'accueil
+const qrLink="http://insecam.com/en/view/229/"; // lien du QR code
+const q=document.getElementById("q"),eng=document.getElementById("engine"),view=document.getElementById("view"),status=document.getElementById("status");
+let hist=[home],i=0;navigate(home);
+function isUrl(x){return /^(https?:\/\/|www\.)|^[\w-]+\.[\w.-]{2,}/i.test(x)}
+function norm(x){x=x.trim();if(x==="")return home;if(isUrl(x))return /^https?:\/\//i.test(x)?x:"https://"+x;
+const s=encodeURIComponent(x);return eng.value==="duck"?"https://duckduckgo.com/?q="+s:eng.value==="google"?"https://www.google.com/search?q="+s:"https://www.bing.com/search?q="+s}
+function navigate(x){const u=norm(x);hist=hist.slice(0,i+1);hist.push(u);i++;view.src=u;q.value=u;setStatus("Chargement…")}
+function back(){if(i>0){i--;view.src=hist[i];q.value=hist[i];setStatus("Retour")}}
+function fwd(){if(i<hist.length-1){i++;view.src=hist[i];q.value=hist[i];setStatus("Avancer")}}
+function reload(){view.src=hist[i];setStatus("Rechargement…")}
+function setStatus(t){status.textContent=t}
+document.getElementById("go").onclick=()=>navigate(q.value);
+document.getElementById("back").onclick=back;
+document.getElementById("fwd").onclick=fwd;
+document.getElementById("reload").onclick=reload;
+document.getElementById("home").onclick=()=>navigate(home);
+q.addEventListener("keydown",(e)=>{if(e.key==="Enter")navigate(q.value)});
+view.addEventListener("load",()=>setStatus("Terminé"));
+// Génération du QR code vers YouTube
+QRCode.toCanvas(document.getElementById('qrcode'), qrLink, {width:100}, function (err) {
+  if (err) console.error(err);
+});
+</script>
+</body></html>
